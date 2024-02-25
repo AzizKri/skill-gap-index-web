@@ -15,16 +15,17 @@ function App() {
     const upload = async (e) => {
         setUploadStatus(1)
         const requestOptions = {
-            method: 'POST',
+            method: 'PUT',
             headers: {
                 "Authorization": "Bearer " + process.env.REACT_APP_AUTH_TOKEN,
+                "file-name": `${university}/${Date.now() + '_' + file.name}`
             },
-            body: JSON.stringify({
-                "uni": university,
-                "file": file
-            })
+            body: file
         };
-        await fetch(`https://sgi-upload.uaeu.club/`, requestOptions);
+        await fetch(`https://sgi-upload.uaeu.club/`, requestOptions)
+        .catch((e) => {
+            console.log(`Error ${e}`)
+        })
         setUploadStatus(2)
     }
 
