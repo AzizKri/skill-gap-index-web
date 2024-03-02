@@ -1,0 +1,29 @@
+.upload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    font-size: 22px;
+}
+
+.upload label {
+    margin-bottom: 8px;
+}
+
+.upload_card {
+    padding: 2rem;
+    background-color: #f3eec3;
+    border-radius: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.upload_card_form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
