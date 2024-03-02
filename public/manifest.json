@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Skill Gap Index",
+  "name": "Compare your university's study materials with the job market",
   "icons": [
     {
       "src": "favicon.ico",
