@@ -1,29 +1,91 @@
-.upload {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    width: 100%;
-    height: 100vh;
-    font-size: 22px;
-}
-
 .upload label {
     margin-bottom: 8px;
 }
 
 .upload_card {
     padding: 2rem;
-    background-color: #f3eec3;
+    background-color: #ffffff;
     border-radius: 2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    box-shadow: rgba(160, 166, 170, 0.2) 0px 1px 5px 0px
 }
 
 .upload_card_form {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
 }
 
+.upload_card_form_select {
+    min-width: 256px;
+    position: relative;
+    display: flex;
+}
+
+.upload_card_form_select select {
+    -webkit-appearance: none;
+    appearance: none;
+    
+    font-size: 16px;
+    padding: 8px 24px 8px 12px;
+    background-color: #fff;
+    border: 1px solid #caced1;
+    border-radius: 8px;
+    color: #000;
+    cursor: pointer;
+    margin-left: 2rem;
+}
+
+.upload_card_form_select::after {
+    --size: 0.3rem;
+    content: "";
+    position: absolute;
+    right: 1rem;
+    pointer-events: none;
+}
+
+.upload_card_form_select::after {
+    border-left: var(--size) solid transparent;
+    border-right: var(--size) solid transparent;
+    border-top: var(--size) solid black;
+    top: 40%;
+}
+
+.upload_card_form_upload input[type="file"] {
+    display: none;
+}
+
+.upload_card_form_upload_input {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-left: 2rem;
+    font-size: 18px;
+    display: inline-block;
+    padding: 6px 12px;
+}
+
+.input_disabled {
+    cursor: default;
+    color: #aaa;
+}
+
+.upload_card_form_files {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+}
+
+.upload_card_form_files span {
+    margin-left: .5rem;
+}
+
+.upload_card_form_submit {
+    display: none;
+    
+    border: 1px solid #ccc;
+    width: 12rem;
+    border-radius: 8px;
+    font-size: 18px;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+}
