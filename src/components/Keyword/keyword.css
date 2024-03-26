@@ -1,0 +1,41 @@
+.keyword {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 30px;
+    margin-bottom: 8px;
+    box-shadow: rgba(160, 166, 170, 0.4) 0px 1px 5px 0px
+}
+
+.keyword_word {
+    margin: 12px;
+}
+
+.keyword_bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    color: white;
+    background-color: rgb(30, 42, 83);
+
+    height: 36px;
+    width: 80%;
+    margin: 12px;
+    border-radius: 10px;
+}
+
+.keyword_bar_highlight {
+    background-color: rgb(99, 121, 190);
+    border-radius: 10px;
+    height: inherit;
+    z-index: 1;
+}
+
+.keyword_bar_repititions {
+    margin: 0 8px 0 -100%;
+    position: relative;
+    z-index: 2;
+}
