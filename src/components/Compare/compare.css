@@ -1,0 +1,18 @@
+.compare_card {
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 2rem;
+    box-shadow: rgba(160, 166, 170, 0.2) 0px 1px 5px 0px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.compare_section {
+    width: 45%;
+}
+
+.compare_section_title {
+    font-size: 40px;
+    margin: 16px;
+}
