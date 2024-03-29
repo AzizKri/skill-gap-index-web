@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ColorRing } from 'react-loader-spinner';
 import { AiOutlineFile } from "react-icons/ai";
+import pdfToText from 'react-pdftotext';
 import './upload.css';
 
 function Upload() {
@@ -15,19 +16,41 @@ function Upload() {
 
     const upload = async (e) => {
         setUploadStatus(1)
+        let fileContent
+
+        if (file.type === "application/pdf") {
+            await pdfToText(file)
+                .then(text => { fileContent = text })
+                .catch((e) => {
+                    console.log(`Error ${e}`)
+                    setUploadStatus(3)
+                })
+        } else {
+            console.log("Not pdf")
+            fileContent = file
+        }
+        
+        const fileName = file.name.split(".")
+        fileName.pop()
+
         const requestOptions = {
             method: 'PUT',
             headers: {
                 "Authorization": "Bearer " + process.env.REACT_APP_AUTH_TOKEN,
-                "file-name": `${university}/${Date.now() + '_' + file.name}`
+                "file-name": `${university}/${fileName.join("")}`,
+                "file-ext": file.type,
+                "file-last-mod": file.lastModified
             },
-            body: file
+            body: fileContent
         };
+
         await fetch(`https://sgi-upload.uaeu.club/`, requestOptions)
-            .catch((e) => {
+            .then(() => {
+                setUploadStatus(2)
+            }).catch((e) => {
                 console.log(`Error ${e}`)
+                setUploadStatus(3)
             })
-        setUploadStatus(2)
     }
 
     return (
@@ -54,20 +77,21 @@ function Upload() {
                         </label>
                     </div>
                     <br />
-                    {file? 
-                    <div>
-                        <div className="upload_card_form_files">
-                            <AiOutlineFile size={18}/>
-                            <span>{file.name}</span>
-                        </div>
-                        <br />
-                    </div> :
-                    null}
-                    <input className="upload_card_form_submit" type="submit" disabled={(university === "0" || file == null || uploadStatus !== 0) ? true : false} />
+                    {file ?
+                        <div>
+                            <div className="upload_card_form_files">
+                                <AiOutlineFile size={18} />
+                                <span>{file.name}</span>
+                            </div>
+                            <br />
+                        </div> :
+                        null}
+                    <input className="upload_card_form_submit" type="submit" disabled={(university === "0" || file == null || (uploadStatus !== 0 && uploadStatus !== 3)) ? true : false} />
                 </form>
                 {(uploadStatus === 1) ? <ColorRing height="64" width="64" colors={[]} /> :
                     (uploadStatus === 2) ? <h3>Uploaded!</h3> :
-                        null}
+                        (uploadStatus === 3) ? <h3 style={{ color: "#c37670" }}>Upload failed</h3> :
+                            null}
             </div>
         </div>
     );
