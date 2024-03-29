@@ -37,7 +37,8 @@ function Upload() {
             method: 'PUT',
             headers: {
                 "Authorization": "Bearer " + process.env.REACT_APP_AUTH_TOKEN,
-                "file-name": `${university}/${fileName.join("")}`,
+                "university": university,
+                "file-name": `${fileName.join("")}`,
                 "file-ext": file.type,
                 "file-last-mod": file.lastModified
             },
