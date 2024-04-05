@@ -2,34 +2,89 @@ import React, { useState } from "react";
 import { ColorRing } from 'react-loader-spinner';
 import { AiOutlineFile } from "react-icons/ai";
 import pdfToText from 'react-pdftotext';
+import PizZip from "pizzip";
+import { DOMParser } from "@xmldom/xmldom";
 import './upload.css';
 
 function Upload() {
     const [university, setUniversity] = useState("0");
     const [file, setFile] = useState(null);
     const [uploadStatus, setUploadStatus] = useState(0);
+    // 0: open
+    // 1: uploading
+    // 2: complete
+    // 3: error
 
     const onClick = async (e) => {
         e.preventDefault();
         await upload();
     }
 
+    const str2xml = (str) => {
+        if (str.charCodeAt(0) === 65279) {
+            // BOM sequence
+            str = str.substr(1);
+        }
+        return new DOMParser().parseFromString(str, "text/xml");
+    }
+
+    const getParagraphs = (content) => {
+        const zip = new PizZip(content);
+        const xml = str2xml(zip.files["word/document.xml"].asText());
+        const paragraphsXml = xml.getElementsByTagName("w:p");
+        const paragraphs = [];
+      
+        for (let i = 0, len = paragraphsXml.length; i < len; i++) {
+          let fullText = "";
+          const textsXml = paragraphsXml[i].getElementsByTagName("w:t");
+          for (let j = 0, len2 = textsXml.length; j < len2; j++) {
+            const textXml = textsXml[j];
+            if (textXml.childNodes) {
+              fullText += textXml.childNodes[0].nodeValue;
+            }
+          }
+          if (fullText) {
+            paragraphs.push(fullText);
+          }
+        }
+        return paragraphs.join();
+      }
+
     const upload = async (e) => {
-        setUploadStatus(1)
+        // setUploadStatus(1)
         let fileContent
 
-        if (file.type === "application/pdf") {
-            await pdfToText(file)
+        // Check if we're uploading a valid file
+        switch (file.type) {
+            case "application/pdf":
+                // PDF Files
+
+                await pdfToText(file)
                 .then(text => { fileContent = text })
-                .catch((e) => {
-                    console.log(`Error ${e}`)
-                    setUploadStatus(3)
-                })
-        } else {
-            console.log("Not pdf")
-            fileContent = file
+                    .catch((e) => {
+                        console.log(`Error ${e}`)
+                        setUploadStatus(3)
+                    })
+                break;
+            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                // .DOCX Files
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const text = getParagraphs(await file.arrayBuffer());
+                    fileContent = text
+                    console.log(fileContent)
+                }
+
+                reader.onerror = (err) => console.log(err)
+                reader.readAsBinaryString(file)
+                break;
+            default:
+                console.log("Not pdf")
+                fileContent = file
+                setUploadStatus(3)
+                break;
         }
-        
+
         const fileName = file.name.split(".")
         fileName.pop()
 
