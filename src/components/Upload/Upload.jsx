@@ -62,18 +62,18 @@ function Upload() {
                         setUploadStatus(3)
                     })
                 break;
+            case "application/msword":
             case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
                 // .DOCX Files
                 const buffer = await file.arrayBuffer();
                 const text = getParagraphs(buffer);
                 return text;
+            case "application/vnd.ms-powerpoint":
             case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-                // TODO Implement
-                // Continue as default
             default:
                 console.log("Not pdf")
                 setUploadStatus(3)
-                return file;
+                return null;
         }
     }
 
@@ -96,13 +96,17 @@ function Upload() {
         };
 
         // test(requestOptions.body)
-        await fetch(`https://sgi-upload.uaeu.club/`, requestOptions)
-            .then(() => {
-                setUploadStatus(2)
-            }).catch((e) => {
-                console.log(`Error ${e}`)
-                setUploadStatus(3)
-            })
+        if (requestOptions.body !== null) {
+            await fetch(`https://sgi-upload.uaeu.club/`, requestOptions)
+                .then(() => {
+                    setUploadStatus(2)
+                }).catch((e) => {
+                    console.log(`Error ${e}`)
+                    setUploadStatus(3)
+                })
+        } else {
+            Error("No text to analyze")
+        }
     }
 
     // const test = async (content) => {
