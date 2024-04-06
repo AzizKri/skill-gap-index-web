@@ -67,6 +67,9 @@ function Upload() {
                 const buffer = await file.arrayBuffer();
                 const text = getParagraphs(buffer);
                 return text;
+            case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+                // TODO Implement
+                // Continue as default
             default:
                 console.log("Not pdf")
                 setUploadStatus(3)
