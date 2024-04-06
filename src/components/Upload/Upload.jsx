@@ -2,34 +2,84 @@ import React, { useState } from "react";
 import { ColorRing } from 'react-loader-spinner';
 import { AiOutlineFile } from "react-icons/ai";
 import pdfToText from 'react-pdftotext';
+import PizZip from "pizzip";
+import { DOMParser } from "@xmldom/xmldom";
 import './upload.css';
 
 function Upload() {
     const [university, setUniversity] = useState("0");
     const [file, setFile] = useState(null);
     const [uploadStatus, setUploadStatus] = useState(0);
+    // 0: open
+    // 1: uploading
+    // 2: complete
+    // 3: error
 
     const onClick = async (e) => {
         e.preventDefault();
-        await upload();
+        await uploadFile();
     }
 
-    const upload = async (e) => {
-        setUploadStatus(1)
-        let fileContent
-
-        if (file.type === "application/pdf") {
-            await pdfToText(file)
-                .then(text => { fileContent = text })
-                .catch((e) => {
-                    console.log(`Error ${e}`)
-                    setUploadStatus(3)
-                })
-        } else {
-            console.log("Not pdf")
-            fileContent = file
+    const str2xml = (str) => {
+        if (str.charCodeAt(0) === 65279) {
+            // BOM sequence
+            str = str.substr(1);
         }
-        
+        return new DOMParser().parseFromString(str, "text/xml");
+    }
+
+    const getParagraphs = (content) => {
+        const zip = new PizZip(content);
+        const xml = str2xml(zip.files["word/document.xml"].asText());
+        const paragraphsXml = xml.getElementsByTagName("w:p");
+        const paragraphs = [];
+
+        for (let i = 0, len = paragraphsXml.length; i < len; i++) {
+            let fullText = "";
+            const textsXml = paragraphsXml[i].getElementsByTagName("w:t");
+            for (let j = 0, len2 = textsXml.length; j < len2; j++) {
+                const textXml = textsXml[j];
+                if (textXml.childNodes) {
+                    fullText += textXml.childNodes[0].nodeValue;
+                }
+            }
+            if (fullText) {
+                paragraphs.push(fullText);
+            }
+        }
+        return paragraphs.join();
+    }
+
+    const extractText = async (file) => {
+        // Check if we're uploading a valid file & extract text from it
+        switch (file.type) {
+            case "application/pdf":
+                // PDF Files
+                await pdfToText(file)
+                    .then(text => { return text; })
+                    .catch((e) => {
+                        console.log(`Error ${e}`)
+                        setUploadStatus(3)
+                    })
+                break;
+            case "application/msword":
+            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                // .DOCX Files
+                const buffer = await file.arrayBuffer();
+                const text = getParagraphs(buffer);
+                return text;
+            case "application/vnd.ms-powerpoint":
+            case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+            default:
+                console.log("Not pdf")
+                setUploadStatus(3)
+                return null;
+        }
+    }
+
+    const uploadFile = async (e) => {
+        setUploadStatus(1)
+
         const fileName = file.name.split(".")
         fileName.pop()
 
@@ -42,17 +92,40 @@ function Upload() {
                 "file-ext": file.type,
                 "file-last-mod": file.lastModified
             },
-            body: fileContent
+            body: await extractText(file)
         };
 
-        await fetch(`https://sgi-upload.uaeu.club/`, requestOptions)
-            .then(() => {
-                setUploadStatus(2)
-            }).catch((e) => {
-                console.log(`Error ${e}`)
-                setUploadStatus(3)
-            })
+        // test(requestOptions.body)
+        if (requestOptions.body !== null) {
+            await fetch(`https://sgi-upload.uaeu.club/`, requestOptions)
+                .then(() => {
+                    setUploadStatus(2)
+                }).catch((e) => {
+                    console.log(`Error ${e}`)
+                    setUploadStatus(3)
+                })
+        } else {
+            Error("No text to analyze")
+        }
     }
+
+    // const test = async (content) => {
+    //     function escapeRegExp(string) {
+    //         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    //     }
+
+    //     const file = await fetch("https://sgi-files.uaeu.club/global%2Fkeywords.txt")
+    //     const text = await file.text()
+    //     const kw = text.split("\n").map(element => element.trim())
+    //     let found = {}
+    //     kw.forEach(element => {
+    //         const regex = new RegExp(escapeRegExp(element), "gi")
+    //         const matches = content.match(regex)
+    //         if (matches) {
+    //             found[element] = matches.length
+    //         };
+    //     });
+    // }
 
     return (
         <div className="content" >
