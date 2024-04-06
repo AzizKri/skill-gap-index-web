@@ -17,7 +17,7 @@ function Upload() {
 
     const onClick = async (e) => {
         e.preventDefault();
-        await upload();
+        await uploadFile();
     }
 
     const str2xml = (str) => {
@@ -33,34 +33,30 @@ function Upload() {
         const xml = str2xml(zip.files["word/document.xml"].asText());
         const paragraphsXml = xml.getElementsByTagName("w:p");
         const paragraphs = [];
-      
+
         for (let i = 0, len = paragraphsXml.length; i < len; i++) {
-          let fullText = "";
-          const textsXml = paragraphsXml[i].getElementsByTagName("w:t");
-          for (let j = 0, len2 = textsXml.length; j < len2; j++) {
-            const textXml = textsXml[j];
-            if (textXml.childNodes) {
-              fullText += textXml.childNodes[0].nodeValue;
+            let fullText = "";
+            const textsXml = paragraphsXml[i].getElementsByTagName("w:t");
+            for (let j = 0, len2 = textsXml.length; j < len2; j++) {
+                const textXml = textsXml[j];
+                if (textXml.childNodes) {
+                    fullText += textXml.childNodes[0].nodeValue;
+                }
             }
-          }
-          if (fullText) {
-            paragraphs.push(fullText);
-          }
+            if (fullText) {
+                paragraphs.push(fullText);
+            }
         }
         return paragraphs.join();
-      }
+    }
 
-    const upload = async (e) => {
-        // setUploadStatus(1)
-        let fileContent
-
-        // Check if we're uploading a valid file
+    const extractText = async (file) => {
+        // Check if we're uploading a valid file & extract text from it
         switch (file.type) {
             case "application/pdf":
                 // PDF Files
-
                 await pdfToText(file)
-                .then(text => { fileContent = text })
+                    .then(text => { return text; })
                     .catch((e) => {
                         console.log(`Error ${e}`)
                         setUploadStatus(3)
@@ -68,22 +64,18 @@ function Upload() {
                 break;
             case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
                 // .DOCX Files
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const text = getParagraphs(await file.arrayBuffer());
-                    fileContent = text
-                    console.log(fileContent)
-                }
-
-                reader.onerror = (err) => console.log(err)
-                reader.readAsBinaryString(file)
-                break;
+                const buffer = await file.arrayBuffer();
+                const text = getParagraphs(buffer);
+                return text;
             default:
                 console.log("Not pdf")
-                fileContent = file
                 setUploadStatus(3)
-                break;
+                return file;
         }
+    }
+
+    const uploadFile = async (e) => {
+        setUploadStatus(1)
 
         const fileName = file.name.split(".")
         fileName.pop()
@@ -97,9 +89,10 @@ function Upload() {
                 "file-ext": file.type,
                 "file-last-mod": file.lastModified
             },
-            body: fileContent
+            body: await extractText(file)
         };
 
+        // test(requestOptions.body)
         await fetch(`https://sgi-upload.uaeu.club/`, requestOptions)
             .then(() => {
                 setUploadStatus(2)
@@ -108,6 +101,24 @@ function Upload() {
                 setUploadStatus(3)
             })
     }
+
+    // const test = async (content) => {
+    //     function escapeRegExp(string) {
+    //         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    //     }
+
+    //     const file = await fetch("https://sgi-files.uaeu.club/global%2Fkeywords.txt")
+    //     const text = await file.text()
+    //     const kw = text.split("\n").map(element => element.trim())
+    //     let found = {}
+    //     kw.forEach(element => {
+    //         const regex = new RegExp(escapeRegExp(element), "gi")
+    //         const matches = content.match(regex)
+    //         if (matches) {
+    //             found[element] = matches.length
+    //         };
+    //     });
+    // }
 
     return (
         <div className="content" >
