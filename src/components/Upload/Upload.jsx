@@ -28,7 +28,7 @@ function Upload() {
         return new DOMParser().parseFromString(str, "text/xml");
     }
 
-    const getParagraphs = (content) => {
+    const getParagraphsFromWord = (content) => {
         const zip = new PizZip(content);
         const xml = str2xml(zip.files["word/document.xml"].asText());
         const paragraphsXml = xml.getElementsByTagName("w:p");
@@ -50,6 +50,49 @@ function Upload() {
         return paragraphs.join();
     }
 
+    async function getTextFromPPT(arrayBuffer) {
+        try {
+            const zip = new PizZip(arrayBuffer);
+            const text = [];
+
+            let slideIndex = 1;
+            while (true) {
+                const slideFile = zip.file(`ppt/slides/slide${slideIndex}.xml`);
+                if (!slideFile) break;
+
+                const slideFileText = slideFile.asText();
+                const pxml = str2xml(slideFileText);
+                const paragraphsXml = pxml.getElementsByTagName("a:p");
+
+                const paragraphs = [];
+
+                for (let i = 0, len = paragraphsXml.length; i < len; i++) {
+                    let fullText = "";
+                    const textsXml = paragraphsXml[i].getElementsByTagName("a:t");
+                    for (let j = 0, len2 = textsXml.length; j < len2; j++) {
+                        const textXml = textsXml[j];
+                        if (textXml.childNodes) {
+                            fullText += textXml.childNodes[0].nodeValue;
+                        }
+                    }
+                    if (fullText) {
+                        paragraphs.push(fullText);
+                    }
+                }
+
+                text.push(paragraphs.join(" "))
+
+                slideIndex++;
+            }
+
+            const finalText = text.join(" ").trim();
+            return finalText;
+        } catch (err) {
+            console.error('Error extracting text from PPTX:', err);
+            return '';
+        }
+    }
+
     const extractText = async (file) => {
         // Check if we're uploading a valid file & extract text from it
         switch (file.type) {
@@ -64,12 +107,16 @@ function Upload() {
                 break;
             case "application/msword":
             case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                // .DOCX Files
-                const buffer = await file.arrayBuffer();
-                const text = getParagraphs(buffer);
-                return text;
+                // Word Documents
+                const WBuffer = await file.arrayBuffer();
+                const WText = getParagraphsFromWord(WBuffer);
+                return WText;
             case "application/vnd.ms-powerpoint":
             case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+                // PowerPoint Documents
+                const PBuffer = await file.arrayBuffer();
+                const PText = await getTextFromPPT(PBuffer);
+                return PText;
             default:
                 console.log("Not pdf")
                 setUploadStatus(3)
